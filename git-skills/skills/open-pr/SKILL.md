@@ -5,11 +5,9 @@ description: Open a GitHub pull request from the current branch. Analyzes ALL co
 
 # open-pr
 
-Creates a GitHub pull request by summarizing the full scope of all commits on the current branch since it diverged from main. Never bases the title or body on only the most recent commit.
-
 ## Pre-flight: gather context
 
-Before anything else, collect the following in a single parallel batch of Bash calls:
+Collect the following in a single parallel batch of Bash calls:
 
 | Variable | Command |
 |---|---|
@@ -17,9 +15,10 @@ Before anything else, collect the following in a single parallel batch of Bash c
 | `REMOTE_STATUS` | `git status -sb` |
 | `COMMITS_ONELINE` | `git log main..HEAD --oneline` |
 | `COMMITS_DETAIL` | `git log main..HEAD --format="%h %s%n%n%b---"` |
-| `DIFF_STAT` | `git diff main...HEAD --stat` |
 
 If `COMMITS_ONELINE` is empty (no commits ahead of main), stop and tell the user there is nothing to open a PR for.
+
+Check for an existing PR on this branch via `gh pr view --json url -q .url` (or the MCP equivalent). If one exists, output its URL and stop — do not create a duplicate.
 
 ## Tool discovery
 

@@ -1,11 +1,9 @@
 ---
 name: pr-merge
-description: Rebase the current branch onto its target (default: main) then merge the PR using a merge commit for linear history. Use when the user says "merge PR", "rebase and merge", "land this PR", or "/pr-merge". CRITICAL: stops immediately on rebase conflicts and instructs the user to resolve them manually — never auto-resolves.
+description: Rebase the current branch onto its target (defaults to main) then merge the PR using a merge commit for linear history. Use when the user says "merge PR", "rebase and merge", "land this PR", or "/pr-merge". CRITICAL — stops immediately on rebase conflicts and instructs the user to resolve them manually, never auto-resolves.
 ---
 
 # pr-merge
-
-Merges a pull request via rebase-then-merge-commit. Enforces a linear history by rebasing the source branch onto the target before merging. Never auto-resolves conflicts.
 
 ## Pre-flight: gather context
 

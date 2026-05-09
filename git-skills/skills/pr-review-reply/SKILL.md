@@ -5,8 +5,6 @@ description: Reply to pull request review threads one at a time. Shows full thre
 
 # pr-review-reply
 
-Handles review thread replies on a GitHub PR one thread at a time. Never sends batch replies. Shows full context before drafting, confirms with the user, then submits.
-
 ## Pre-flight: identify the PR and fetch threads
 
 Resolve the PR number in this priority order:
@@ -37,6 +35,8 @@ Scan the available tool list for:
 ## Thread-by-thread protocol
 
 Process unresolved threads one at a time in chronological order. Never batch.
+
+**Auto-mode:** if the user says `auto` or `auto-reply all` at invocation, skip Step 3 confirmations and submit each reply immediately. Before starting, warn once: `Auto mode: replies will be submitted without confirmation. Continue? (yes/no)` — proceed only on explicit yes.
 
 ### Step 1 — display thread context
 
@@ -126,7 +126,6 @@ After all threads are processed, output:
 
 - Default reply language: **Korean**, unless the user specifies otherwise at invocation (e.g. "reply in English").
 - If the user provides an `edit: <text>` response in a different language, submit that text as-is. Continue using the session default for subsequent threads unless the user changes it.
-- Auto-mode: if the user says `auto` or `auto-reply all`, enter auto-submit mode — draft and submit each reply without waiting for confirmation. Before entering auto mode, warn: `Auto mode: replies will be submitted immediately without confirmation. Continue? (yes/no)`
 
 ## Rules
 

@@ -5,8 +5,6 @@ description: Fetch and analyze all reviews on a GitHub pull request. Consolidate
 
 # pr-review-analyze
 
-Fetches all reviews and inline review comments on a GitHub PR and consolidates them into a structured report.
-
 ## Pre-flight: identify the PR
 
 Resolve the PR number in this priority order:
@@ -47,7 +45,7 @@ Resolved/outdated comments are still included but marked `[resolved]` in the out
 
 ## Output format
 
-Read `references/output-format.md` for the exact report template (full report and empty-report variants) and verdict rules. Use that template verbatim when producing the final output.
+Before producing output, read `references/output-format.md` and follow its template verbatim (full report and empty-report variants, verdict rules).
 
 ## Rules
 
