@@ -21,9 +21,15 @@ If `PR_NUMBER` cannot be determined automatically, ask the user before proceedin
 
 ## Tool discovery
 
-At runtime, scan the available tool list for any tool whose name matches `*merge_pull_request*` (e.g. `mcp__plugin_github_github__merge_pull_request`, `mcp__github__merge_pull_request`). Use the first match.
+At runtime, scan the available tool list for tools matching these patterns:
 
-If no matching MCP tool is available, fall back to `gh pr merge`.
+| Operation | MCP pattern | gh CLI fallback |
+|---|---|---|
+| Merge PR | `*merge_pull_request*` | `gh pr merge` |
+| Fetch PR details (body) | `*get_pull_request*` | `gh pr view --json body` |
+| Update PR body | `*update_pull_request*` | `gh pr edit --body-file` |
+
+Use the first match for each. If no MCP tool is available, fall back to the gh CLI.
 
 ## Workflow
 
@@ -66,7 +72,47 @@ git push --force-with-lease origin <BRANCH>
 
 If `--force-with-lease` is rejected (someone pushed to the branch after you fetched), stop and report. Never retry with bare `--force`.
 
-### Step 4 — merge the PR
+### Step 4 — verify Test Plan
+
+Fetch the PR body:
+
+**Path A — MCP:** Call `*get_pull_request*` and extract the `body` field.
+
+**Path B — gh CLI fallback:**
+
+```bash
+gh pr view <PR_NUMBER> --json body -q .body
+```
+
+Parse the `## Test Plan` section and extract all unchecked items (`- [ ] ...`). If the section is absent or all items are already checked (`- [x]`), skip to Step 5.
+
+For each unchecked item, present it to the user one at a time:
+
+```
+Test Plan verification (<n> items remaining)
+
+[ ] <item text>
+Completed? [yes / no]
+```
+
+| User input | Action |
+|---|---|
+| `yes` or `y` | Mark item done, proceed to next item |
+| `no` or `n` | Stop immediately. Tell the user to complete the item and re-run `/pr-merge`. Do NOT proceed to Step 5. |
+
+Once all items are confirmed, update the PR body by replacing each verified `- [ ]` with `- [x]`:
+
+**Path A — MCP:** Call `*update_pull_request*` with the updated body.
+
+**Path B — gh CLI fallback:**
+
+```bash
+gh pr edit <PR_NUMBER> --body-file - <<'BODY'
+<updated body>
+BODY
+```
+
+### Step 5 — merge the PR
 
 **Path A — GitHub MCP merge tool available:**
 
@@ -82,7 +128,7 @@ gh pr merge <PR_NUMBER> --merge
 
 The `--merge` flag creates a merge commit. Never use `--squash` or `--rebase`.
 
-### Step 5 — report result
+### Step 6 — report result
 
 Output the merge commit SHA and the PR URL.
 
