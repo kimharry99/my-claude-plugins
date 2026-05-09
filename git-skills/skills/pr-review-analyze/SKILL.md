@@ -31,10 +31,10 @@ To resolve `{owner}` and `{repo}` for gh CLI fallbacks: `git remote get-url orig
 
 ## Spooling — wait for reviews
 
-If the reviews array returned above is empty (length == 0), do not output the empty report yet. Instead, locate `scripts/wait-for-reviews.sh` bundled with this skill and run it:
+If the reviews array returned above is empty (length == 0), do not output the empty report yet. Instead, run the bundled script using the Bash tool:
 
 ```bash
-bash <path-to-skill>/scripts/wait-for-reviews.sh <owner> <repo> <PR>
+bash scripts/wait-for-reviews.sh <owner> <repo> <PR>
 ```
 
 The script prints `"No reviews yet on PR #<PR>. Polling again in 60s..."` each cycle and exits once at least one review is found. After it exits, re-fetch reviews and inline comments in parallel, then proceed with the analysis.
