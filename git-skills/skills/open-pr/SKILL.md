@@ -7,14 +7,20 @@ description: Open a GitHub pull request from the current branch. Analyzes ALL co
 
 ## Pre-flight: gather context
 
-Collect the following in a single parallel batch of Bash calls:
+First, fetch the latest remote state:
+
+```bash
+git fetch origin
+```
+
+Then collect the following in a single parallel batch of Bash calls:
 
 | Variable | Command |
 |---|---|
 | `BRANCH` | `git branch --show-current` |
 | `REMOTE_STATUS` | `git status -sb` |
-| `COMMITS_ONELINE` | `git log main..HEAD --oneline` |
-| `COMMITS_DETAIL` | `git log main..HEAD --format="%h %s%n%n%b---"` |
+| `COMMITS_ONELINE` | `git log origin/main..HEAD --oneline` |
+| `COMMITS_DETAIL` | `git log origin/main..HEAD --format="%h %s%n%n%b---"` |
 
 If `COMMITS_ONELINE` is empty (no commits ahead of main), stop and tell the user there is nothing to open a PR for.
 

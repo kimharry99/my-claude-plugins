@@ -30,7 +30,7 @@ Scan the available tool list for:
 
 | Operation | MCP pattern | gh CLI fallback |
 |---|---|---|
-| Reply to a review comment thread | `*create_review_comment_reply*` or `*reply_to_review_comment*` | `gh api repos/{owner}/{repo}/pulls/<PR>/comments/<comment_id>/replies -X POST -f body="<body>"` |
+| Reply to a review comment thread | `*create_review_comment_reply*` or `*reply_to_review_comment*` | `gh api repos/{owner}/{repo}/pulls/comments/<comment_id>/replies -X POST -f body="<body>"` |
 
 ## Thread-by-thread protocol
 
@@ -98,7 +98,7 @@ Call the discovered `*create_review_comment_reply*` tool with:
 **Path B — gh CLI fallback:**
 
 ```bash
-gh api "repos/{owner}/{repo}/pulls/<PR>/comments/<comment_id>/replies" \
+gh api "repos/{owner}/{repo}/pulls/comments/<comment_id>/replies" \
   -X POST \
   -f body="<reply text>"
 ```

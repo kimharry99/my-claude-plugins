@@ -1,6 +1,6 @@
 ---
 name: pr-merge
-description: Rebase the current branch onto its target (defaults to main) then merge the PR using a merge commit for linear history. Use when the user says "merge PR", "rebase and merge", "land this PR", or "/pr-merge". CRITICAL — stops immediately on rebase conflicts and instructs the user to resolve them manually, never auto-resolves.
+description: Rebase the current branch onto its target (defaults to main) then merge via a merge commit — rebase ensures a linear branch tip, the merge commit preserves the integration point. Use when the user says "merge PR", "rebase and merge", "land this PR", or "/pr-merge". CRITICAL — stops immediately on rebase conflicts and instructs the user to resolve them manually, never auto-resolves.
 ---
 
 # pr-merge
