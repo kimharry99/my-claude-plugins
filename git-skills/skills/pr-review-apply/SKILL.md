@@ -92,7 +92,7 @@ If the comment has no file/line (top-level PR comment), show `(general comment)`
 
 ### Step 2 — draft reply
 
-Draft a reply in Korean. The reply should:
+Draft a reply in Korean (or the language specified at invocation). The reply should:
 
 - Acknowledge the reviewer's point specifically.
 - Describe what was done: fixed, clarified, intentional / deferred with rationale, or disagree with reason.

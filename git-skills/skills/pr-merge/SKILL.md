@@ -84,7 +84,10 @@ Fetch the PR body:
 gh pr view <PR_NUMBER> --json body -q .body
 ```
 
-Parse the `## Test Plan` section and extract all unchecked items (`- [ ] ...`). If the section is absent or all items are already checked (`- [x]`), skip to Step 5.
+Parse the `## Test Plan` section:
+- **Section absent**: Stop and ask the user to add a `## Test Plan` section to the PR body before merging. Do NOT skip to Step 5.
+- **Section present, all items already checked (`- [x]`)**: Skip to Step 5.
+- **Section present, unchecked items (`- [ ]`) found**: Continue below.
 
 For each unchecked item, present it to the user one at a time:
 
@@ -100,7 +103,7 @@ Completed? [yes / no]
 | `yes` or `y` | Mark item done, proceed to next item |
 | `no` or `n` | Stop immediately. Tell the user to complete the item and re-run `/pr-merge`. Do NOT proceed to Step 5. |
 
-Once all items are confirmed, update the PR body by replacing each verified `- [ ]` with `- [x]`:
+Once all items are confirmed, update the PR body by replacing each verified `- [ ]` with `- [x]` **within the `## Test Plan` section only** (do not modify checkboxes in other sections):
 
 **Path A — MCP:** Call `*update_pull_request*` with the updated body.
 
