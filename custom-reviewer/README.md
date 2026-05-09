@@ -1,4 +1,4 @@
-# my-claude-workflow
+# custom-reviewer
 
 Multi-perspective code and plan reviews for Claude Code.
 
@@ -26,16 +26,10 @@ This plugin is for Claude Code users who want PR-style reviews (or plan/spec san
 
 ## Install
 
-Add the marketplace in Claude Code:
-
-```bash
-/plugin marketplace add kimharry99/my-claude-workflow
-```
-
 Install the plugin:
 
 ```bash
-/plugin install my-claude-workflow@my-claude-workflow
+/plugin install custom-reviewer@my-claude-plugins
 ```
 
 Reload plugins:
@@ -152,8 +146,8 @@ You can develop and test this plugin against itself — no publish step needed.
 
 ```bash
 # From a target repo where you want to run reviews:
-/plugin marketplace add /absolute/path/to/my-claude-workflow
-/plugin install my-claude-workflow@my-claude-workflow
+/plugin marketplace add /absolute/path/to/my-claude-plugins
+/plugin install custom-reviewer@my-claude-plugins
 /reload-plugins
 ```
 
