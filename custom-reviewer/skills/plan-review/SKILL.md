@@ -1,5 +1,5 @@
 ---
-name: plan_review
+name: plan-review
 description: Review a single plan/spec document by orchestrating specialist reviewer subagents. Use when the user asks to review a plan, review a spec, or sanity-check a draft plan file before implementation. Builds a unified diff treating the plan as a new file, fans out to the `reviewer` subagent once per active specialist review context, then returns a consolidated summary.
 ---
 
