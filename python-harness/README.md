@@ -1,4 +1,4 @@
-# my-python-harness
+# python-harness
 
 Python convention guardrails for Claude Code.
 
@@ -23,16 +23,10 @@ This plugin enforces Python style and architectural rules automatically through 
 
 ## Install
 
-Add the marketplace in Claude Code:
-
-```bash
-/plugin marketplace add kimharry99/my-python-harness
-```
-
 Install the plugin:
 
 ```bash
-/plugin install my-python-harness@my-python-harness
+/plugin install python-harness@my-claude-plugins
 ```
 
 Reload plugins:
@@ -116,8 +110,8 @@ You can develop and test this plugin against itself — no publish step needed.
 
 ```bash
 # From a target repo where you want to run reviews:
-/plugin marketplace add /absolute/path/to/my-python-harness
-/plugin install my-python-harness@my-python-harness
+/plugin marketplace add /absolute/path/to/my-claude-plugins
+/plugin install python-harness@my-claude-plugins
 /reload-plugins
 ```
 
