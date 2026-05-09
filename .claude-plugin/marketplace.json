@@ -1,5 +1,6 @@
 {
   "name": "my-claude-plugins",
+  "version": "0.2.0",
   "owner": {
     "name": "dmkim",
     "email": "kimharry9927@gmail.com"
