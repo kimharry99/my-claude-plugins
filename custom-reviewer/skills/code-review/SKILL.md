@@ -1,11 +1,11 @@
 ---
-name: code_review
+name: code-review
 description: Review code changes by orchestrating specialist reviewer subagents. Supports two scopes — `working` (uncommitted changes in the working tree) and `branch` (PR-style, base branch → current HEAD, optionally including uncommitted work). Use when the user asks to review the working tree, review the current diff, run a code review, review before committing, or review a branch/PR against a base. Builds a diff file for the chosen scope, fans out to the `reviewer` subagent once per active specialist review context (currently: architect), then returns a consolidated summary.
 ---
 
-# code_review
+# code-review
 
-Orchestrates a multi-perspective review of a code diff. You (Claude) build a diff for the requested scope, spawn one reviewer subagent per active specialist context in parallel, and return a consolidated summary. For review of plan/spec documents, use the `plan_review` skill instead.
+Orchestrates a multi-perspective review of a code diff. You (Claude) build a diff for the requested scope, spawn one reviewer subagent per active specialist context in parallel, and return a consolidated summary. For review of plan/spec documents, use the `plan-review` skill instead.
 
 ## Scope modes
 
@@ -34,9 +34,9 @@ The reviewer subagent (`@${CLAUDE_PLUGIN_ROOT}/agents/reviewer.md`) reads any `@
 
 1. **Build the diff.** From the target repo root, run:
    ```
-   ${CLAUDE_PLUGIN_ROOT}/skills/code_review/scripts/build_diff.sh --mode <working|branch|auto> [--base <ref>] [-- <pathspec>...]
+   ${CLAUDE_PLUGIN_ROOT}/skills/code-review/scripts/build_diff.sh --mode <working|branch|auto> [--base <ref>] [-- <pathspec>...]
    ```
-   The script writes the diff to `<target-repo>/.claude/tmp/code_review-<timestamp>.diff` and prints `DIFF_PATH=`, `MODE=`, and (for branch mode) `BASE=` on stdout. Exit code `2` means "nothing to review" — stop and report that back.
+   The script writes the diff to `<target-repo>/.claude/tmp/code-review-<timestamp>.diff` and prints `DIFF_PATH=`, `MODE=`, and (for branch mode) `BASE=` on stdout. Exit code `2` means "nothing to review" — stop and report that back.
 
 2. **Enumerate active specialists.** For every row in the Available Specialists table, resolve the `@${CLAUDE_PLUGIN_ROOT}/...` reference and confirm the context file exists and is non-empty. Build the list of active specialists.
 

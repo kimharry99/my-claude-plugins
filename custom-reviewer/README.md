@@ -2,20 +2,20 @@
 
 Multi-perspective code and plan reviews for Claude Code.
 
-This plugin gives you two slash commands — `/code_review` and `/plan_review` — that fan out a shared file-based reviewer agent across every active "review context" in parallel, then consolidate the findings into a single Critical / Important / Suggestion summary.
+This plugin gives you two slash commands — `/code-review` and `/plan-review` — that fan out a shared file-based reviewer agent across every active "review context" in parallel, then consolidate the findings into a single Critical / Important / Suggestion summary.
 
 This plugin is for Claude Code users who want PR-style reviews (or plan/spec sanity checks) from inside their normal workflow, with a pluggable way to add new review perspectives.
 
 ## What You Get
 
-- `/code_review` — review uncommitted changes or a branch diff (PR-style) through every active specialist in parallel
-- `/plan_review` — review a single plan/spec document (defaults to the latest file in `~/.claude/plans/`)
+- `/code-review` — review uncommitted changes or a branch diff (PR-style) through every active specialist in parallel
+- `/plan-review` — review a single plan/spec document (defaults to the latest file in `~/.claude/plans/`)
 - A shared `reviewer` agent with a strict, diff-anchored output template
 - A **pluggable review-context** system — drop a new `context/review-<name>.md` file to add a perspective
 - Shipped perspectives:
   - **architect** (SOLID / DRY / KISS / YAGNI, module boundaries, dependency direction), backed by `docs/software_architecture.md`
-  - **comment** (code-comment accuracy, staleness, and long-term maintainability; `/code_review` only)
-  - **simplification** (local clarity — naming, nesting, dead code, redundant patterns, idiom fit; `/code_review` only)
+  - **comment** (code-comment accuracy, staleness, and long-term maintainability; `/code-review` only)
+  - **simplification** (local clarity — naming, nesting, dead code, redundant patterns, idiom fit; `/code-review` only)
 - Reserved slot: **performance** (empty placeholder, activates automatically once you fill it in)
 
 ## Requirements
@@ -40,18 +40,18 @@ Reload plugins:
 
 After install, you should see:
 
-- the `/code_review` and `/plan_review` slash commands
+- the `/code-review` and `/plan-review` slash commands
 - the review contexts under `context/` (architect is active out of the box; performance is a reserved empty slot)
 
 A quick first run inside any git repo:
 
 ```bash
-/code_review
+/code-review
 ```
 
 ## Usage
 
-### `/code_review`
+### `/code-review`
 
 Runs a multi-perspective review on a code diff. Each active specialist runs in parallel against the same diff and returns findings anchored to `file:line`.
 
@@ -71,11 +71,11 @@ Review my working tree.
 Run a code review against origin/main.
 ```
 
-Output: a `# Code Review Summary` block with Critical / Important / Suggestion findings plus an overall `APPROVE` / `REQUEST CHANGES` verdict. The underlying diff is written to `.claude/tmp/code_review-<timestamp>.diff` in the target repo.
+Output: a `# Code Review Summary` block with Critical / Important / Suggestion findings plus an overall `APPROVE` / `REQUEST CHANGES` verdict. The underlying diff is written to `.claude/tmp/code-review-<timestamp>.diff` in the target repo.
 
 This command is read-only — it never modifies source files.
 
-### `/plan_review`
+### `/plan-review`
 
 Runs the same reviewer pipeline against a single plan/spec markdown document — treated as a new-file diff — so you can sanity-check a draft before implementation.
 
@@ -107,7 +107,7 @@ This command is read-only.
    - a checklist of checkpoints (phrased to apply to both code diffs and plan diffs)
    - priority hints (what's Critical vs Important vs Suggestion under this perspective)
    - any `@`-referenced reference docs the reviewer should load
-2. Add a row for the new specialist to the *Available specialists* table in `skills/code_review/SKILL.md` and/or `skills/plan_review/SKILL.md`, depending on where it should apply.
+2. Add a row for the new specialist to the *Available specialists* table in `skills/code-review/SKILL.md` and/or `skills/plan-review/SKILL.md`, depending on where it should apply.
 3. Done — the `reviewer` agent itself does not change. An empty context file is treated as "not ready" and skipped, so reserving slots ahead of time is safe.
 
 ## Repo Layout
@@ -130,10 +130,10 @@ docs/
 └── software_architecture.md           # referenced by the architect context
 
 skills/
-├── code_review/
+├── code-review/
 │   ├── SKILL.md
 │   └── scripts/build_diff.sh
-└── plan_review/
+└── plan-review/
     ├── SKILL.md
     └── scripts/build_plan_diff.sh
 ```
@@ -151,4 +151,4 @@ You can develop and test this plugin against itself — no publish step needed.
 /reload-plugins
 ```
 
-Then edit files in this repo and run `/reload-plugins` in the target session to pick up the changes. `/code_review` writes its diff to `<target-repo>/.claude/tmp/`, not into this plugin's repo.
+Then edit files in this repo and run `/reload-plugins` in the target session to pick up the changes. `/code-review` writes its diff to `<target-repo>/.claude/tmp/`, not into this plugin's repo.

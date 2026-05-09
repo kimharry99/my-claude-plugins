@@ -41,7 +41,7 @@ else
     tmp_dir="${PWD}/.claude/tmp"
 fi
 mkdir -p "$tmp_dir"
-out="${tmp_dir}/plan_review-$(date +%s).diff"
+out="${tmp_dir}/plan-review-$(date +%s).diff"
 
 # git diff --no-index exits 1 when files differ — that is the expected path here.
 set +e
