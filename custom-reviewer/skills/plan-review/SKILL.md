@@ -3,7 +3,7 @@ name: plan-review
 description: Review a single plan/spec document by orchestrating specialist reviewer subagents. Use when the user asks to review a plan, review a spec, or sanity-check a draft plan file before implementation. Builds a unified diff treating the plan as a new file, fans out to the `reviewer` subagent once per active specialist review context, then returns a consolidated summary.
 ---
 
-# plan_review
+# plan-review
 
 Orchestrates a multi-perspective review of a single plan document. You (Claude) build a diff for the plan, spawn one reviewer subagent per active specialist context in parallel, and return a consolidated summary.
 
@@ -21,9 +21,9 @@ The reviewer subagent (`@${CLAUDE_PLUGIN_ROOT}/agents/reviewer.md`) reads any `@
 
 1. **Build the diff.** Run:
    ```
-   ${CLAUDE_PLUGIN_ROOT}/skills/plan_review/scripts/build_plan_diff.sh [--plan <path>]
+   ${CLAUDE_PLUGIN_ROOT}/skills/plan-review/scripts/build_plan_diff.sh [--plan <path>]
    ```
-   If `--plan` is omitted, the script picks the most recently modified `*.md` under `~/.claude/plans/`. The script writes the diff under `.claude/tmp/plan_review-<timestamp>.diff` (inside the current git repo if any, otherwise `$PWD`) and prints `DIFF_PATH=` and `PLAN=` on stdout. Exit code `2` means "nothing to review" — stop and report that back.
+   If `--plan` is omitted, the script picks the most recently modified `*.md` under `~/.claude/plans/`. The script writes the diff under `.claude/tmp/plan-review-<timestamp>.diff` (inside the current git repo if any, otherwise `$PWD`) and prints `DIFF_PATH=` and `PLAN=` on stdout. Exit code `2` means "nothing to review" — stop and report that back.
 
 2. **Enumerate active specialists.** For every row in the Available Specialists table, resolve the `@${CLAUDE_PLUGIN_ROOT}/...` reference and confirm the context file exists and is non-empty. Build the list of active specialists.
 

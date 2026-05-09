@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a unified diff for code_review scope. Prints DIFF_PATH / MODE / BASE to stdout.
+# Build a unified diff for code-review scope. Prints DIFF_PATH / MODE / BASE to stdout.
 # Exit codes: 0 = diff produced, 2 = nothing to review, 1 = error.
 set -euo pipefail
 
@@ -24,7 +24,7 @@ fi
 repo_root=$(git rev-parse --show-toplevel)
 tmp_dir="${repo_root}/.claude/tmp"
 mkdir -p "$tmp_dir"
-out="${tmp_dir}/code_review-$(date +%s).diff"
+out="${tmp_dir}/code-review-$(date +%s).diff"
 
 resolve_base() {
     if [[ -n "$base" ]]; then
