@@ -1,0 +1,110 @@
+---
+name: pr-review-analyze
+description: Fetch and analyze all reviews on a GitHub pull request. Consolidates reviewer feedback into Critical / Important / Suggestion categories and produces a per-reviewer summary. Output mirrors the custom-reviewer consolidated format. Use when the user says "analyze PR reviews", "summarize review feedback", "what did reviewers say", "show me the review comments", or "/pr-review-analyze".
+---
+
+# pr-review-analyze
+
+Fetches all reviews and inline review comments on a GitHub PR and consolidates them into a structured report.
+
+## Pre-flight: identify the PR
+
+Resolve the PR number in this priority order:
+
+1. User-supplied PR number (e.g. `#123` or `123` in the invocation).
+2. Current branch: discover via GitHub MCP `*get_pull_request*` or `gh pr view --json number,title -q '[.number,.title]'`.
+3. If neither works, ask the user for the PR number.
+
+Also collect the PR title and base branch name.
+
+## Tool discovery
+
+At runtime, scan the available tool list for tools matching the patterns below. Use the first match found for each operation.
+
+| Operation | MCP pattern | gh CLI fallback |
+|---|---|---|
+| Get PR details | `*get_pull_request*` | `gh pr view <PR> --json number,title,state,baseRefName,headRefName` |
+| List reviews | `*list_pull_request_reviews*` or `*get_pull_request_reviews*` | `gh api repos/{owner}/{repo}/pulls/<PR>/reviews` |
+| List inline review comments | `*list_pull_request_review_comments*` or `*get_review_comments*` | `gh api repos/{owner}/{repo}/pulls/<PR>/comments` |
+
+Fetch reviews and inline comments in parallel once the PR number is resolved.
+
+To resolve `{owner}` and `{repo}` for gh CLI fallbacks: `git remote get-url origin` and parse the GitHub URL.
+
+## Severity categorization
+
+Classify each review and comment using these rules, in priority order:
+
+| Signal | Severity |
+|---|---|
+| Review state is `CHANGES_REQUESTED` | The review verdict is Critical; its individual comments default to Important unless clearly a nit |
+| Comment body contains keywords: `bug`, `broken`, `incorrect`, `crash`, `security`, `vulnerability`, `data loss`, `exploit` | Critical |
+| Nit indicator prefix in comment body: `nit:`, `nit -`, `minor:`, `optional:`, `s/` | Suggestion |
+| Trivial style remark (whitespace, typo in a comment, trivial rename suggestion) | Suggestion |
+| All other comments | Important |
+
+Resolved/outdated comments are still included but marked `[resolved]` in the output.
+
+## Output format
+
+Produce this exact structure:
+
+```markdown
+# PR Review Analysis
+
+**PR:** #<number> — <title>
+**Reviewers:** <comma-separated reviewer login names>
+**Reviews:** <n> reviews, <n> inline comments
+**Overall Verdict:** APPROVE | REQUEST CHANGES
+
+---
+
+## Consolidated Findings
+
+### Critical
+- [<reviewer>] `<file>:<line>` — <description>
+- [<reviewer>] (general comment) — <description>
+
+### Important
+- [<reviewer>] `<file>:<line>` — <description>
+
+### Suggestions
+- [<reviewer>] `<file>:<line>` — <description> *(nit)*
+
+---
+
+## Per-Reviewer Summary
+
+### <reviewer-login> — APPROVE | REQUEST CHANGES | COMMENT
+**Verdict:** <review state>
+**Overview:** <1-2 sentence summary of this reviewer's overall stance>
+
+#### Issues raised
+- `<file>:<line>` — <description> [Critical | Important | Suggestion]
+
+#### Praise / positive observations
+- <observation>
+```
+
+**Overall Verdict** = `REQUEST CHANGES` if any reviewer submitted a `CHANGES_REQUESTED` review OR any Critical finding exists; otherwise `APPROVE`.
+
+If a comment has no file/line association (top-level PR comment), label the location as `(general comment)`.
+
+If there are no reviews or comments at all, output:
+
+```markdown
+# PR Review Analysis
+
+**PR:** #<number> — <title>
+**Reviews:** 0 reviews, 0 comments
+
+No reviews have been submitted on this PR yet.
+```
+
+## Rules
+
+- Fetch reviews and inline comments in parallel once the PR number is known.
+- Never fabricate or infer reviewer intent beyond what the review text states.
+- Include resolved comments but mark them `[resolved]`.
+- Every reviewer who submitted at least one review or comment must appear in the Per-Reviewer Summary.
+- Do not modify any source files or the PR during analysis.

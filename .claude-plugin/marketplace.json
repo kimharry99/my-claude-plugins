@@ -14,6 +14,11 @@
       "name": "custom-reviewer",
       "source": "./custom-reviewer",
       "description": "Multi-perspective code & plan reviews orchestrated by a shared reviewer agent."
+    },
+    {
+      "name": "git-skills",
+      "source": "./git-skills",
+      "description": "GitHub PR lifecycle skills — open, rebase-merge, analyze reviews, and reply to review threads."
     }
   ]
 }
