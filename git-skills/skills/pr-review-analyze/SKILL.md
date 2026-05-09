@@ -47,59 +47,7 @@ Resolved/outdated comments are still included but marked `[resolved]` in the out
 
 ## Output format
 
-Produce this exact structure:
-
-```markdown
-# PR Review Analysis
-
-**PR:** #<number> — <title>
-**Reviewers:** <comma-separated reviewer login names>
-**Reviews:** <n> reviews, <n> inline comments
-**Overall Verdict:** APPROVE | REQUEST CHANGES
-
----
-
-## Consolidated Findings
-
-### Critical
-- [<reviewer>] `<file>:<line>` — <description>
-- [<reviewer>] (general comment) — <description>
-
-### Important
-- [<reviewer>] `<file>:<line>` — <description>
-
-### Suggestions
-- [<reviewer>] `<file>:<line>` — <description> *(nit)*
-
----
-
-## Per-Reviewer Summary
-
-### <reviewer-login> — APPROVE | REQUEST CHANGES | COMMENT
-**Verdict:** <review state>
-**Overview:** <1-2 sentence summary of this reviewer's overall stance>
-
-#### Issues raised
-- `<file>:<line>` — <description> [Critical | Important | Suggestion]
-
-#### Praise / positive observations
-- <observation>
-```
-
-**Overall Verdict** = `REQUEST CHANGES` if any reviewer submitted a `CHANGES_REQUESTED` review OR any Critical finding exists; otherwise `APPROVE`.
-
-If a comment has no file/line association (top-level PR comment), label the location as `(general comment)`.
-
-If there are no reviews or comments at all, output:
-
-```markdown
-# PR Review Analysis
-
-**PR:** #<number> — <title>
-**Reviews:** 0 reviews, 0 comments
-
-No reviews have been submitted on this PR yet.
-```
+Read `references/output-format.md` for the exact report template (full report and empty-report variants) and verdict rules. Use that template verbatim when producing the final output.
 
 ## Rules
 
