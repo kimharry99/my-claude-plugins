@@ -1,0 +1,19 @@
+{
+  "name": "my-claude-plugins",
+  "owner": {
+    "name": "dmkim",
+    "email": "kimharry9927@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "python-harness",
+      "source": "./python-harness",
+      "description": "Enforces Python conventions via hooks (OOP, style, test layout)."
+    },
+    {
+      "name": "custom-reviewer",
+      "source": "./custom-reviewer",
+      "description": "Multi-perspective code & plan reviews orchestrated by a shared reviewer agent."
+    }
+  ]
+}
