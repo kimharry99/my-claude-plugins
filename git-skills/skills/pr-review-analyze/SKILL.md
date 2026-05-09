@@ -29,6 +29,18 @@ Fetch reviews and inline comments in parallel once the PR number is resolved.
 
 To resolve `{owner}` and `{repo}` for gh CLI fallbacks: `git remote get-url origin` and parse the GitHub URL.
 
+## Spooling — wait for reviews
+
+If the reviews array returned above is empty (length == 0), do not output the empty report yet. Instead, run the bundled script using the Bash tool:
+
+```bash
+bash scripts/wait-for-reviews.sh <owner> <repo> <PR>
+```
+
+The script prints `"No reviews yet on PR #<PR>. Polling again in 60s..."` each cycle and exits once at least one review is found. After it exits, re-fetch reviews and inline comments in parallel, then proceed with the analysis.
+
+If reviews are already present (length > 0), skip this section entirely.
+
 ## Severity categorization
 
 Classify each review and comment using these rules, in priority order:

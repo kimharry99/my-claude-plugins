@@ -2,7 +2,7 @@
 
 GitHub PR lifecycle skills for Claude Code.
 
-Covers the full PR workflow: creating PRs, rebase-merging, analyzing existing review feedback, and replying to review threads one at a time.
+Covers the full PR workflow: creating PRs, rebase-merging, analyzing existing review feedback, and applying review fixes with commit & push then replying to threads.
 
 ## Skills
 
@@ -11,7 +11,7 @@ Covers the full PR workflow: creating PRs, rebase-merging, analyzing existing re
 | `/open-pr` | Push the current branch (if needed) and open a GitHub PR. Title summarizes ALL commits; body in Korean. |
 | `/pr-merge` | Rebase source branch onto target, then merge via merge commit. Stops on conflicts and asks user to resolve. |
 | `/pr-review-analyze` | Fetch all reviews on a PR and produce a Critical / Important / Suggestion consolidated report. |
-| `/pr-review-reply` | Reply to review threads one at a time, Korean by default, with user confirmation before each submit. |
+| `/pr-review-apply` | Commit & push review fixes, then reply to each review thread. Copilot bot threads are auto-replied; human reviewer threads require confirmation. |
 
 All skills try GitHub MCP tools first and fall back to the `gh` CLI automatically.
 
@@ -66,16 +66,16 @@ Show me the review feedback.
 
 Output follows the custom-reviewer format: `# PR Review Analysis` with Critical / Important / Suggestions findings and a per-reviewer summary.
 
-### `/pr-review-reply`
+### `/pr-review-apply`
 
-Walks through every unresolved review comment thread one by one.
+Intended for use after `/pr-review-analyze`. Commits & pushes all applied review fixes, then walks through every unresolved thread one by one.
 
 ```
-Reply to the review comments.
-Address the feedback on PR #42.
+Apply the review feedback.
+Address the review on PR #42.
 ```
 
-For each thread: shows full context → drafts Korean reply → waits for `yes / skip / edit: <text> / stop`.
+Phase 1 — commits & pushes existing code changes with a review-summary message. Phase 2 — for each thread: shows full context → drafts Korean reply → auto-submits for Copilot bot threads, waits for `yes / skip / edit: <text> / stop` for human reviewers.
 
 ## Repo Layout
 
@@ -90,7 +90,7 @@ skills/
 │   └── SKILL.md
 ├── pr-review-analyze/
 │   └── SKILL.md
-└── pr-review-reply/
+└── pr-review-apply/
     └── SKILL.md
 ```
 

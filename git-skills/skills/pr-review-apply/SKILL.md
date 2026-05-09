@@ -1,9 +1,9 @@
 ---
-name: pr-review-reply
-description: Reply to pull request review threads one at a time. Shows full thread context before drafting each reply, then waits for user confirmation before submitting. Default reply language is Korean. Use when the user says "reply to PR comments", "respond to review", "address review feedback", "answer reviewer comments", or "/pr-review-reply".
+name: pr-review-apply
+description: Apply review feedback to code, commit and push the changes, then reply to each review thread. Intended to run after /pr-review-analyze — by invocation time the user has already analyzed reviews, decided what to address, and applied the code changes. Use when the user says "apply review feedback", "address review", "fix review comments", "review 반영", or "/pr-review-apply".
 ---
 
-# pr-review-reply
+# pr-review-apply
 
 ## Pre-flight: identify the PR and fetch threads
 
@@ -13,7 +13,7 @@ Resolve the PR number in this priority order:
 2. Current branch: `gh pr view --json number -q .number` or GitHub MCP `*get_pull_request*`.
 3. If neither works, ask the user.
 
-Once the PR number is known, fetch all review comment threads in parallel:
+Once the PR number is known, run the following in parallel:
 
 | Operation | MCP pattern | gh CLI fallback |
 |---|---|---|
@@ -22,7 +22,7 @@ Once the PR number is known, fetch all review comment threads in parallel:
 
 To resolve `{owner}` and `{repo}`: parse `git remote get-url origin`.
 
-Filter the thread list: skip any thread where the current authenticated user has already replied (the user is identified via `gh api user -q .login` or the MCP equivalent). Mark those as `[already replied]` in the final summary.
+Filter the thread list: skip any thread where the current authenticated user has already replied (identified via `gh api user -q .login` or MCP equivalent). Mark those as `[already replied]` in the final summary.
 
 ## Tool discovery — reply tools
 
@@ -32,11 +32,45 @@ Scan the available tool list for:
 |---|---|---|
 | Reply to a review comment thread | `*create_review_comment_reply*` or `*reply_to_review_comment*` | `gh api repos/{owner}/{repo}/pulls/<PR>/comments/<comment_id>/replies -X POST -f body="<body>"` |
 
-## Thread-by-thread protocol
+## Phase 1 — Commit & push
 
-Process unresolved threads one at a time in chronological order. Never batch.
+### Step 1 — show changed files
 
-**Auto-mode:** if the user says `auto` or `auto-reply all` at invocation, skip Step 3 confirmations and submit each reply immediately. Before starting, warn once: `Auto mode: replies will be submitted without confirmation. Continue? (yes/no)` — proceed only on explicit yes.
+Run `git diff --stat HEAD` to display the list of modified files. If the working tree is clean (no staged or unstaged changes and no untracked files relevant to the review), skip Phase 1 entirely and proceed to Phase 2.
+
+### Step 2 — draft commit message
+
+Draft a commit message that summarizes which review items were addressed. Present it for confirmation:
+
+```
+Changed files:
+<git diff --stat output>
+
+Proposed commit message:
+<draft message>
+
+[yes / edit: <message> / skip commit]
+```
+
+| User input | Action |
+|---|---|
+| `yes` or `y` | Commit with the draft message |
+| `edit: <message>` | Commit with the provided message |
+| `skip commit` | Skip Phase 1, proceed to Phase 2 without committing |
+
+### Step 3 — commit and push
+
+```bash
+git add -A
+git commit -m "<confirmed message>"
+git push
+```
+
+Stop if push fails and report the error. Do not proceed to Phase 2 until push succeeds (or `skip commit` was chosen).
+
+## Phase 2 — Reply to review threads
+
+Process unresolved threads one at a time in chronological order.
 
 ### Step 1 — display thread context
 
@@ -58,13 +92,24 @@ If the comment has no file/line (top-level PR comment), show `(general comment)`
 
 ### Step 2 — draft reply
 
-Draft a reply in Korean (or the language the user specified). The reply should:
+Draft a reply in Korean (or the language specified at invocation). The reply should:
 
 - Acknowledge the reviewer's point specifically.
-- State the action taken: fixed, clarified, intentional / deferred with rationale, or disagrees with reason.
+- Describe what was done: fixed, clarified, intentional / deferred with rationale, or disagree with reason.
 - Be concise — typically 2-5 sentences.
 
-Present the draft to the user:
+### Step 3 — confirm and submit
+
+**Copilot bot threads** — if the reviewer login matches `copilot`, `github-copilot`, `copilot[bot]`, or the account's `type` field is `Bot`:
+
+Submit the reply immediately without asking for confirmation. Print:
+```
+[Auto] Reply submitted to thread #<n> (Copilot bot).
+```
+
+**Human reviewer threads:**
+
+Present the draft:
 
 ```
 Proposed reply:
@@ -73,18 +118,12 @@ Proposed reply:
 [yes / skip / edit: <your text> / stop]
 ```
 
-### Step 3 — wait for user confirmation
-
-Do NOT submit until the user responds:
-
 | User input | Action |
 |---|---|
 | `yes` or `y` | Submit the draft as-is |
 | `skip` or `s` | Skip this thread, move to next |
 | `edit: <text>` | Replace the draft with `<text>` and submit |
 | `stop` or `abort` | Stop the entire workflow, emit the summary so far |
-
-Do not proceed to the next thread until the user confirms or skips.
 
 ### Step 4 — submit the reply
 
@@ -129,9 +168,10 @@ After all threads are processed, output:
 
 ## Rules
 
-- Never send replies in bulk. Each thread is a separate confirmation loop.
-- Always show the full thread context (Step 1) before drafting.
-- Never submit without user confirmation (unless in auto mode after explicit consent).
+- Never send human-reviewer replies in bulk. Each thread is a separate confirmation loop.
+- Copilot bot threads are auto-submitted without user confirmation.
+- Always show the full thread context (Phase 2 Step 1) before drafting, even for auto-submitted threads.
+- Never submit to human reviewer threads without user confirmation.
 - Never reply to threads where the current user has already replied — skip and note in summary.
-- Never modify any source files during this workflow.
+- Never modify any source files during Phase 2.
 - If the gh CLI fallback needs `{owner}` and `{repo}`, resolve them from `git remote get-url origin` before proceeding.

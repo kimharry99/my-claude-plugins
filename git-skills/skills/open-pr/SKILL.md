@@ -49,14 +49,14 @@ If `git push` fails, stop immediately and report the error. Do not attempt PR cr
 Analyze ALL commits in `COMMITS_DETAIL` together as a unit, not one by one.
 
 - **Title**: Under 70 characters. English. A concise summary of what all commits accomplish together.
-- **Body**: Written in Korean. Use this exact template:
+- **Body**: Written in Korean. Use this base template; `## Summary` and `## Test Plan` are required, and additional sections (e.g. `## Background`, `## Screenshots`) may be inserted between them as needed:
 
 ```
 ## Summary
 <1-3 bullet points summarizing what all commits accomplish together>
 
-## Test plan
-<Bulleted checklist of testing steps>
+## Test Plan
+<testing steps as - [ ] checkboxes>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
