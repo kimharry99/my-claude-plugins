@@ -20,4 +20,4 @@ Key conventions:
 - Use top-level imports only. Place all `import` statements at the top of the file, not inside functions, methods, or conditionals. (Exception: test files are exempt from this rule.)
 - Use direct attribute access instead of `setattr`/`getattr`/`hasattr`.
 - Always include `from __future__ import annotations` at the top of every Python file (before other imports).
-- Define all function parameters positionally. Using bare `*` as a keyword-only argument separator is forbidden.
+- Declare all function parameters as positional-or-keyword. Using bare `*` as a keyword-only argument separator is forbidden.
