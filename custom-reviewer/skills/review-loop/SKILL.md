@@ -1,6 +1,6 @@
 ---
 name: review-loop
-description: Runs specialist reviewers, auto-applies tactical fixes, requests user approval for design direction changes, and repeats until all verdicts are APPROVE or 10 iterations are reached. Use when the user asks for an iterative or automated review-fix cycle. For one-shot review without fixing, use `code-review` or `plan-review` instead.
+description: Runs specialist reviewers, auto-applies tactical fixes, requests user approval for design direction changes, and repeats until all verdicts are APPROVE or 10 iterations are reached. Use when the user asks for an iterative or automated review-fix cycle. For single-pass review without fixing, use `code-review` or `plan-review`.
 ---
 
 ## Invocation
@@ -41,13 +41,13 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 3. **Initialize loop state.** `iteration = 1`, `max_iterations = 10`. Track the following across iterations:
    - `declined_issues` — descriptions of directional findings the user declined.
    - `applied_changes` — per-iteration human-readable fix summaries (for the final report).
-   - `fixed_decisions` — structured record of every applied fix: `{file, approx_location, description, reason, iteration}`. Used for conflict detection and reviewer context.
+   - `fixed_decisions` — structured record of every applied fix: `{file, approx_location, description, reason, iteration}`.
 
 4. **LOOP — repeat steps a–k:**
 
    a. **Enumerate active specialists.** Confirm each context file exists and is non-empty; skip missing or empty context files and warn the user which specialist was skipped (if all are skipped, apply the rule in the Rules section).
 
-   b. **Fan out in parallel.** In a single message, emit one `Agent` tool call per active specialist. Values in `< >` are substituted at runtime from the recorded variables. If `fixed_decisions` is non-empty (iteration ≥ 2), append the decision history to the prompt:
+   b. **Fan out in parallel.** In a single message, emit one `Agent` tool call per active specialist. Values in `< >` are substituted at runtime from the recorded variables:
       ```
       description: "<specialist> review (iteration <N>)"
       subagent_type: "general-purpose"
@@ -58,32 +58,30 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
         [plan mode only] The diff represents a plan/spec document treated as a new file.
         Anchor findings to file:line inside the diff.
         Output must match the reviewer template verbatim.
-        [if fixed_decisions non-empty]
-        Previously applied fixes in this loop — do not re-flag for the same reason;
-        only flag if the fix itself introduced a new, distinct problem:
-        - Iteration <N>, <file> ~<approx_location>: <description> [reason: <reason>]
-        - ...
+      ```
+      If `fixed_decisions` is non-empty, append to the prompt:
+      ```
+      Previously applied fixes in this loop — do not re-flag for the same reason;
+      only flag if the fix itself introduced a new, distinct problem:
+      - Iteration <N>, <file> ~<approx_location>: <description> [reason: <reason>]
+      - ...
       ```
 
    c. **Collect outputs.** Do not alter individual reviewer outputs.
 
    d. **Consolidate.**
-      - Code mode: deduplicate overlapping findings. Keep the finding from the first specialist in the default table order; merge others as `(also flagged by <specialist>[, …])`; use the highest priority across the overlap cluster.
+      - Code mode: deduplicate overlapping findings. Keep the finding from the first specialist in the default table order (architect > comment > simplification); merge others as `(also flagged by <specialist>[, …])`; use the highest priority across the overlap cluster.
       - Plan mode: no deduplication needed (single specialist).
 
-   d-bis. **Detect conflicts.** For each consolidated finding, check whether it substantially contradicts a previous fix in `fixed_decisions` (same location AND reverses the prior change intent):
-      - **CONFLICT**: finding reverses a previous fix at the same location (e.g. "remove the extracted helper" after it was extracted for DRY).
-      - **NOT A CONFLICT**: finding raises a different concern at the same location (e.g. "rename the helper" after it was extracted) → treat normally in steps f–h.
-      - **NOT A CONFLICT**: finding targets a location not in `fixed_decisions` → treat normally.
-
-   e. **Check termination.**
-      - **APPROVED**: all individual verdicts are `APPROVE` **and** no Critical or Important findings in the consolidated output → break loop. Note: a reviewer may output `APPROVE` despite open findings; the consolidated-findings check is the authoritative gate.
-      - **TIMEOUT**: `iteration >= max_iterations` → break loop.
+   d-bis. **Detect conflicts.** For each consolidated finding, check whether it substantially contradicts a previous fix in `fixed_decisions`. A conflict is same location AND reversed change intent (e.g. "remove the extracted helper" after it was extracted for DRY); a different concern at the same location, or no overlap with `fixed_decisions`, is not a conflict.
 
    e-bis. **Handle conflicts.** For each CONFLICT finding, present to the user:
       > [CONFLICT] `<finding>` — contradicts fix from iteration `<N>`: "`<previous description>`". Which takes precedence?
-      - New finding wins: apply the new fix, update `fixed_decisions` and `applied_changes`, add original fix's entry to `declined_issues`.
-      - Previous fix wins: add the conflict finding to `declined_issues`.
+      Apply the new fix and update `fixed_decisions`, `applied_changes`, `declined_issues` accordingly; or add the conflict finding to `declined_issues` if the previous fix wins.
+
+   e. **Check termination.**
+      - **APPROVED**: all individual verdicts are `APPROVE` **and** no Critical or Important findings in the consolidated output → break loop.
+      - **TIMEOUT**: `iteration >= max_iterations` → break loop.
 
    f. **Classify all findings** (Critical, Important, and Suggestions) into two buckets:
 
@@ -127,7 +125,7 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 ### Conflicts Resolved  *(if any)*
 - Iteration <N> vs <M>: <conflict summary and resolution>
 
-### Declined Changes
+### Declined Changes  *(if any)*
 - <one-line summary of each declined directional issue>
 ```
 
