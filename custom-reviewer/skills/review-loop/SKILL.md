@@ -3,6 +3,8 @@ name: review-loop
 description: Runs specialist reviewers, auto-applies tactical fixes, requests user approval for design direction changes, and repeats until all verdicts are APPROVE or 10 iterations are reached. Use when the user asks for an iterative or automated review-fix cycle. For single-pass review without fixing, use `code-review` or `plan-review`.
 ---
 
+# review-loop
+
 ## Invocation
 
 ```
@@ -30,7 +32,7 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 
 ## Workflow
 
-1. **Parse args.** Determine mode (`--plan` present → plan, otherwise code). Resolve the specialist list: if `--only` is given, use those specialists exactly — if any name does not appear in the default table above, stop with an error; otherwise use the full default set for the mode.
+1. **Parse args.** Determine mode (`--plan` present → plan, otherwise code). Resolve the specialist list: if `--only` is given, use exactly those specialists — if any name does not appear in the default table above, stop with an error. If `--only` is absent, use the full default set for the mode.
 
 2. **Build initial diff.**
    - Code: `${CLAUDE_PLUGIN_ROOT}/skills/code-review/scripts/build_diff.sh --mode <auto|...> [--base <ref>] [-- <pathspec>...]`
@@ -40,7 +42,7 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 
 3. **Initialize loop state.** `iteration = 1`, `max_iterations = 10`. Track the following across iterations:
    - `declined_issues` — descriptions of directional findings the user declined.
-   - `applied_changes` — per-iteration human-readable fix summaries (for the final report).
+   - `applied_changes` — one aggregated summary per iteration (all fixes applied in that iteration combined into a single entry, mirroring the Final Report's "Iteration N" rows).
    - `fixed_decisions` — structured record of every applied fix: `{file, approx_location, description, reason, iteration}`.
 
 4. **LOOP — repeat steps a–k:**
@@ -70,7 +72,7 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
    c. **Collect outputs.** Do not alter individual reviewer outputs.
 
    d. **Consolidate.**
-      - Code mode: deduplicate overlapping findings. Keep the finding from the first specialist in the default table order (architect > comment > simplification); merge others as `(also flagged by <specialist>[, …])`; use the highest priority across the overlap cluster.
+      - Code mode: deduplicate overlapping findings. Keep the finding from the specialist that *owns the concern*: comment-accuracy issues → `comment`; structural/design violations (SOLID, DRY, coupling) → `architect`; code-volume/complexity → `simplification`. When ownership is ambiguous, fall back to default table order (architect > comment > simplification). Merge the remaining specialists as `(also flagged by <specialist>[, …])` and use the highest priority across the cluster.
       - Plan mode: no deduplication needed (single specialist).
 
    d-bis. **Detect conflicts.** For each consolidated finding, check whether it substantially contradicts a previous fix in `fixed_decisions`. A conflict is same location AND reversed change intent (e.g. "remove the extracted helper" after it was extracted for DRY); a different concern at the same location, or no overlap with `fixed_decisions`, is not a conflict.
@@ -79,9 +81,7 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
       > [CONFLICT] `<finding>` — contradicts fix from iteration `<N>`: "`<previous description>`". Which takes precedence?
       Apply the new fix and update `fixed_decisions`, `applied_changes`, `declined_issues` accordingly; or add the conflict finding to `declined_issues` if the previous fix wins.
 
-   e. **Check termination.**
-      - **APPROVED**: all individual verdicts are `APPROVE` **and** no Critical or Important findings in the consolidated output → break loop.
-      - **TIMEOUT**: `iteration >= max_iterations` → break loop.
+   e. **Check termination (APPROVED only).** If all individual verdicts are `APPROVE` **and** no Critical or Important findings remain in the consolidated output → break loop.
 
    f. **Classify all findings** (Critical, Important, and Suggestions) into two buckets:
 
@@ -90,23 +90,25 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 
    g. **Handle directional findings.** For each directional finding: skip without re-prompting if its description substantially matches an entry in `declined_issues`. Otherwise:
       - Present the finding and its fix recommendation to the user.
-      - If approved: apply the fix with Edit/Write tools; add a one-line summary to `applied_changes`; add a structured entry to `fixed_decisions`.
+      - If approved: apply the fix with Edit/Write tools; collect a one-line fix note (to be combined into `applied_changes` at step k); add a structured entry to `fixed_decisions`.
       - If declined: add the finding's description to `declined_issues`.
 
-   h. **Apply tactical findings.** For each tactical finding, apply the fix directly with Edit/Write tools. When multiple findings target the same file, batch edits. Add a one-line summary per file touched to `applied_changes` and a structured entry per fix to `fixed_decisions`.
+   h. **Apply tactical findings.** For each tactical finding, apply the fix directly with Edit/Write tools. When multiple findings target the same file, batch edits. Collect a one-line fix note per file touched (to be combined into `applied_changes` at step k); add a structured entry per fix to `fixed_decisions`.
 
    i. **Check BLOCKED.** If no fixes were applied in this iteration (all findings matched entries in `declined_issues`) and termination is not yet met → break loop with BLOCKED.
 
-   j. **Rebuild diff.** Re-run the same diff-building script with the original arguments. If exit code `2` (diff is now empty), treat as APPROVED.
+   i-bis. **Check TIMEOUT.** If `iteration >= max_iterations` → break loop. (Placing this after fix application ensures every iteration completes a full review→fix cycle before stopping.)
 
-   k. `iteration += 1`. Go to step 4a.
+   j. **Rebuild diff.** Re-run the same diff-building script with the original arguments. In plan mode, always pass `--plan <PLAN>` explicitly (using the value recorded in step 2) to guarantee the same plan file is reviewed across iterations. If exit code `2` (diff is now empty), treat as APPROVED.
+
+   k. **Consolidate iteration summary.** Combine all fix notes collected in steps g and h during this iteration into a single entry appended to `applied_changes`. Then `iteration += 1`. Go to step 4a.
 
 5. **Emit final report** (see format below).
 
 ## Final Report Format
 
 ```markdown
-## Review Loop Summary
+# Review Loop Summary
 
 **Mode:** <code (working | branch base=<ref>) | plan (<path>)>  •  **Iterations:** <N> / 10  •  **Status:** APPROVED | TIMEOUT | BLOCKED
 
