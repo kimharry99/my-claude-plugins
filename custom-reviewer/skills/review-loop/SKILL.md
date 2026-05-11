@@ -38,13 +38,16 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
    - Record `DIFF_PATH`, `MODE`, `BASE` (branch mode), `PLAN` (plan mode) from stdout (`KEY=value` pairs).
    - Exit code `2` = nothing to review — stop.
 
-3. **Initialize loop state.** `iteration = 1`, `max_iterations = 10`. Track `declined_issues` (descriptions of declined directional findings) and `applied_changes` (per-iteration fix summaries) across iterations.
+3. **Initialize loop state.** `iteration = 1`, `max_iterations = 10`. Track the following across iterations:
+   - `declined_issues` — descriptions of directional findings the user declined.
+   - `applied_changes` — per-iteration human-readable fix summaries (for the final report).
+   - `fixed_decisions` — structured record of every applied fix: `{file, approx_location, description, reason, iteration}`. Used for conflict detection and reviewer context.
 
 4. **LOOP — repeat steps a–k:**
 
    a. **Enumerate active specialists.** Confirm each context file exists and is non-empty; skip missing or empty context files and warn the user which specialist was skipped (if all are skipped, apply the rule in the Rules section).
 
-   b. **Fan out in parallel.** In a single message, emit one `Agent` tool call per active specialist. Values in `< >` are substituted at runtime from the recorded variables:
+   b. **Fan out in parallel.** In a single message, emit one `Agent` tool call per active specialist. Values in `< >` are substituted at runtime from the recorded variables. If `fixed_decisions` is non-empty (iteration ≥ 2), append the decision history to the prompt:
       ```
       description: "<specialist> review (iteration <N>)"
       subagent_type: "general-purpose"
@@ -55,6 +58,11 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
         [plan mode only] The diff represents a plan/spec document treated as a new file.
         Anchor findings to file:line inside the diff.
         Output must match the reviewer template verbatim.
+        [if fixed_decisions non-empty]
+        Previously applied fixes in this loop — do not re-flag for the same reason;
+        only flag if the fix itself introduced a new, distinct problem:
+        - Iteration <N>, <file> ~<approx_location>: <description> [reason: <reason>]
+        - ...
       ```
 
    c. **Collect outputs.** Do not alter individual reviewer outputs.
@@ -63,9 +71,19 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
       - Code mode: deduplicate overlapping findings. Keep the finding from the first specialist in the default table order; merge others as `(also flagged by <specialist>[, …])`; use the highest priority across the overlap cluster.
       - Plan mode: no deduplication needed (single specialist).
 
+   d-bis. **Detect conflicts.** For each consolidated finding, check whether it substantially contradicts a previous fix in `fixed_decisions` (same location AND reverses the prior change intent):
+      - **CONFLICT**: finding reverses a previous fix at the same location (e.g. "remove the extracted helper" after it was extracted for DRY).
+      - **NOT A CONFLICT**: finding raises a different concern at the same location (e.g. "rename the helper" after it was extracted) → treat normally in steps f–h.
+      - **NOT A CONFLICT**: finding targets a location not in `fixed_decisions` → treat normally.
+
    e. **Check termination.**
       - **APPROVED**: all individual verdicts are `APPROVE` **and** no Critical or Important findings in the consolidated output → break loop. Note: a reviewer may output `APPROVE` despite open findings; the consolidated-findings check is the authoritative gate.
       - **TIMEOUT**: `iteration >= max_iterations` → break loop.
+
+   e-bis. **Handle conflicts.** For each CONFLICT finding, present to the user:
+      > [CONFLICT] `<finding>` — contradicts fix from iteration `<N>`: "`<previous description>`". Which takes precedence?
+      - New finding wins: apply the new fix, update `fixed_decisions` and `applied_changes`, add original fix's entry to `declined_issues`.
+      - Previous fix wins: add the conflict finding to `declined_issues`.
 
    f. **Classify all findings** (Critical, Important, and Suggestions) into two buckets:
 
@@ -74,10 +92,10 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 
    g. **Handle directional findings.** For each directional finding: skip without re-prompting if its description substantially matches an entry in `declined_issues`. Otherwise:
       - Present the finding and its fix recommendation to the user.
-      - If approved: apply the fix with Edit/Write tools; add a one-line summary to `applied_changes`.
+      - If approved: apply the fix with Edit/Write tools; add a one-line summary to `applied_changes`; add a structured entry to `fixed_decisions`.
       - If declined: add the finding's description to `declined_issues`.
 
-   h. **Apply tactical findings.** For each tactical finding, apply the fix directly with Edit/Write tools. When multiple findings target the same file, batch edits. Add a one-line summary per file touched to `applied_changes`.
+   h. **Apply tactical findings.** For each tactical finding, apply the fix directly with Edit/Write tools. When multiple findings target the same file, batch edits. Add a one-line summary per file touched to `applied_changes` and a structured entry per fix to `fixed_decisions`.
 
    i. **Check BLOCKED.** If no fixes were applied in this iteration (all findings matched entries in `declined_issues`) and termination is not yet met → break loop with BLOCKED.
 
@@ -105,6 +123,9 @@ description: Runs specialist reviewers, auto-applies tactical fixes, requests us
 - [<perspective>] file:line — …
 #### Suggestions
 - [<perspective>] file:line — …
+
+### Conflicts Resolved  *(if any)*
+- Iteration <N> vs <M>: <conflict summary and resolution>
 
 ### Declined Changes
 - <one-line summary of each declined directional issue>
