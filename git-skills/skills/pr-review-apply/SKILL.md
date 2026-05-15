@@ -40,33 +40,25 @@ Run `git diff --stat HEAD` to display the list of modified files. If the working
 
 ### Step 2 — draft commit message
 
-Draft a commit message that summarizes which review items were addressed. Present it for confirmation:
+Draft a commit message that summarizes which review items were addressed. Print it and proceed immediately to Step 3:
 
 ```
 Changed files:
 <git diff --stat output>
 
-Proposed commit message:
+Commit message:
 <draft message>
-
-[yes / edit: <message> / skip commit]
 ```
-
-| User input | Action |
-|---|---|
-| `yes` or `y` | Commit with the draft message |
-| `edit: <message>` | Commit with the provided message |
-| `skip commit` | Skip Phase 1, proceed to Phase 2 without committing |
 
 ### Step 3 — commit and push
 
 ```bash
 git add -A
-git commit -m "<confirmed message>"
+git commit -m "<drafted message>"
 git push
 ```
 
-Stop if push fails and report the error. Do not proceed to Phase 2 until push succeeds (or `skip commit` was chosen).
+Stop if push fails and report the error. Do not proceed to Phase 2 until push succeeds.
 
 ## Phase 2 — Reply to review threads
 
