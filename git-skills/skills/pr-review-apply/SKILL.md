@@ -58,7 +58,7 @@ git commit -m "<drafted message>"
 git push
 ```
 
-Stop if push fails and report the error. Do not proceed to Phase 2 until push succeeds (or `skip commit` was chosen).
+Stop if push fails and report the error. Do not proceed to Phase 2 until push succeeds.
 
 ## Phase 2 — Reply to review threads
 
